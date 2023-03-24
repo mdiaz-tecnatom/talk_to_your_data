@@ -162,7 +162,7 @@ def get_num_tokens(text: str) -> int:
     return len(tokenized_text)
 
 
-st.image("../../images/datalab_header.png", use_column_width=True)
+st.image("datalab_header.png", use_column_width=True)
 st.title("Talk to your data")
 st.caption("🎙 Now you can interact with your own documents!")
 st.markdown(" ")
