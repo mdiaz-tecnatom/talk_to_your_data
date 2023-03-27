@@ -236,7 +236,7 @@ if st.session_state.user_question and uploaded_file:
 
         try:
             bot_reply = get_bot_reply(
-                st.session_state["chat_history"],
+                st.session_state["chat_history"][::-1][0:3],
                 st.session_state.user_question,
                 st.session_state["bot_engine"],
             )
