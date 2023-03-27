@@ -20,7 +20,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 from langchain.vectorstores import Chroma
-from openai.error import InvalidRequestError, RateLimitError
+from openai.error import APIConnectionError, InvalidRequestError, RateLimitError
 
 st.set_page_config(
     page_title="Talk to your data",
@@ -57,6 +57,7 @@ def embedding_process(openai_api_key: str, pages: list) -> Chroma:
     """Converts text into vectors.
 
     Args:
+        openai_api_key (str): OpenAI API key.
         pages (list): texts extracted from .pdf files.
 
     Returns:
@@ -79,9 +80,8 @@ def define_template() -> ChatPromptTemplate:
 
     system_template = """Use the following pieces of context to answer.
     You're an expert in the given context and just in that context. If you're asked something
-    which is not explicity indicated in the context, say you don't know. Do not try to make up an answer
+    which is not indicated in the context, be brief and say you don't know. Do not try to make up an answer
     even if you have the information in your general knowledge.
-    You reply with brief, to-the-point answers. Use bullet points to highlight the most important ideas.
     ----------------
     {context}"""
     messages = [
@@ -99,6 +99,7 @@ def build_bot_engine(
     """Builds the GPT bot.
 
     Args:
+        openai_api_key (str): OpenAI API key.
         prompt (ChatPromptTemplate): role and prompt template for model interaction.
         vectorstore (object): vectorised texts.
 
@@ -108,7 +109,7 @@ def build_bot_engine(
     """
 
     bot_engine = ChatVectorDBChain.from_llm(
-        ChatOpenAI(openai_api_key=openai_api_key, max_tokens=650, temperature=0.1),
+        ChatOpenAI(openai_api_key=openai_api_key, max_tokens=1000),
         vectorstore,
         qa_prompt=prompt,
     )
@@ -162,7 +163,7 @@ def get_num_tokens(text: str) -> int:
     return len(tokenized_text)
 
 
-st.image("datalab_header.PNG", use_column_width=True)
+st.image("../../images/datalab_header.png", use_column_width=True)
 st.title("Talk to your data")
 st.caption("🎙 Now you can interact with your own documents!")
 st.markdown(" ")
@@ -254,6 +255,9 @@ if st.session_state.user_question and uploaded_file:
                 "The model maximum context length is 4097 tokens. However, the petition exceeded the limit."
             )
 
+        except APIConnectionError:
+            st.error("Error communicating with OpenAI. Connection aborted. Try again.")
+
         st.markdown(" ")
 
         for chat in st.session_state["chat_history"][::-1]:
@@ -270,7 +274,7 @@ if st.session_state.user_question and uploaded_file:
             ):
                 answer = answer.replace("\n", "\n\n")
 
-            st.markdown(answer)
+            st.markdown(answer, unsafe_allow_html=True)
             st.caption(f"Tokens: {answer_tokens}")
             st.markdown(" ")
             st.markdown(" ")
